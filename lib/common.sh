@@ -123,7 +123,7 @@ user_home() {
 }
 
 effective_ssh_port() {
-  sshd -T 2>/dev/null | awk '$1 == "port" { print $2; exit }'
+  sshd -T 2>/dev/null | awk '$1 == "port" && !found { print $2; found=1 }'
 }
 
 save_state() {
