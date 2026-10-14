@@ -14,8 +14,7 @@ config_dir=/etc/ssh/sshd_config.d
 config_file="$config_dir/00-vps-setup.conf"
 mkdir -p "$config_dir"
 
-status "Writing SSH hardening configuration"
-cat > "$config_file" <<CONFIG
+desired_config=$(cat <<CONFIG
 # Managed by vps-setup.
 PasswordAuthentication no
 KbdInteractiveAuthentication no
@@ -23,6 +22,16 @@ PubkeyAuthentication yes
 PermitRootLogin prohibit-password
 Port $SSH_PORT
 CONFIG
+)
+
+if [[ -f "$config_file" ]] && cmp -s "$config_file" <(printf '%s\n' "$desired_config"); then
+  run_quiet sshd -t
+  done_msg "SSH hardening is already configured; SSH port is $SSH_PORT"
+  exit 0
+fi
+
+status "Writing SSH hardening configuration"
+printf '%s\n' "$desired_config" > "$config_file"
 
 status "Validating SSH configuration"
 run_quiet sshd -t

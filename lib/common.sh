@@ -130,8 +130,13 @@ save_state() {
   require_root
   mkdir -p "$STATE_DIR"
   chmod 700 "$STATE_DIR"
-  printf '%s\n' "$2" > "$STATE_DIR/$1"
-  chmod 600 "$STATE_DIR/$1"
+
+  local file="$STATE_DIR/$1"
+  local value=$2
+  if [[ ! -f "$file" ]] || [[ "$(cat "$file")" != "$value" ]]; then
+    printf '%s\n' "$value" > "$file"
+  fi
+  chmod 600 "$file"
 }
 
 read_state() {
@@ -160,14 +165,28 @@ configure_dokploy_firewall() {
   fi
 
   if [[ "$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null)" == "active" ]]; then
-    status "Refreshing Docker-aware firewall integration for Docker Swarm"
-    run_quiet ufw-docker install
+    if docker service inspect ufw-docker-agent >/dev/null 2>&1 && ufw-docker check >/dev/null 2>&1; then
+      done_msg "Docker Swarm firewall integration is already configured"
+    else
+      status "Configuring Docker-aware firewall integration for Docker Swarm"
+      run_quiet ufw-docker install
+    fi
+  fi
+
+  local rules
+  rules=$(ufw-docker list dokploy-traefik 2>/dev/null || true)
+
+  if grep -qE '(^|[^0-9])80/tcp([^0-9]|$)' <<< "$rules" \
+    && grep -qE '(^|[^0-9])443/tcp([^0-9]|$)' <<< "$rules" \
+    && grep -qE '(^|[^0-9])443/udp([^0-9]|$)' <<< "$rules"; then
+    done_msg "Traefik HTTP/HTTPS firewall rules are already configured; Dokploy port 3000 remains private"
+    return 0
   fi
 
   status "Allowing Dokploy Traefik through the Docker-aware firewall"
-  run_quiet ufw-docker allow dokploy-traefik 80/tcp
-  run_quiet ufw-docker allow dokploy-traefik 443/tcp
-  run_quiet ufw-docker allow dokploy-traefik 443/udp
+  grep -qE '(^|[^0-9])80/tcp([^0-9]|$)' <<< "$rules" || run_quiet ufw-docker allow dokploy-traefik 80/tcp
+  grep -qE '(^|[^0-9])443/tcp([^0-9]|$)' <<< "$rules" || run_quiet ufw-docker allow dokploy-traefik 443/tcp
+  grep -qE '(^|[^0-9])443/udp([^0-9]|$)' <<< "$rules" || run_quiet ufw-docker allow dokploy-traefik 443/udp
   run_quiet ufw-docker reload
   done_msg "Traefik HTTP/HTTPS ports are allowed; Dokploy port 3000 remains private"
 }

@@ -8,11 +8,18 @@ require_command ss
 require_command ufw-docker
 
 if docker service inspect dokploy >/dev/null 2>&1; then
-  status "Dokploy is already installed; verifying firewall rules"
+  done_msg "Dokploy is already installed"
+  status "Verifying Dokploy firewall rules"
 else
   status "Checking ports required by Dokploy"
   for port in 80 443 3000; do
-    if ss -H -ltn "sport = :$port" 2>/dev/null | grep -q .; then
+    port_info=$(ss -H -ltnp "sport = :$port" 2>/dev/null || true)
+    [[ -n "$port_info" ]] || continue
+
+    process=$(sed -n 's/.*users:(("\([^"]*\)",pid=\([0-9]*\).*/\1 (PID \2)/p' <<< "$port_info" | head -n 1)
+    if [[ -n "$process" ]]; then
+      fail "TCP port $port is already in use by $process"
+    else
       fail "TCP port $port is already in use"
     fi
   done

@@ -5,9 +5,15 @@ require_root
 require_command curl
 
 if command -v docker >/dev/null 2>&1; then
-  status "Docker is already installed; verifying it"
+  if docker info >/dev/null 2>&1; then
+    done_msg "Docker is already installed and healthy: $(docker --version)"
+    exit 0
+  fi
+
+  status "Docker is installed but not running; starting it"
+  run_quiet systemctl enable --now docker
   run_quiet docker info
-  done_msg "Existing Docker installation is healthy: $(docker --version)"
+  done_msg "Docker is installed and healthy: $(docker --version)"
   exit 0
 fi
 

@@ -11,24 +11,56 @@ UFW_DOCKER_URL=${UFW_DOCKER_URL:-https://raw.githubusercontent.com/chaifeng/ufw-
 ssh_port=$(effective_ssh_port)
 [[ -n "$ssh_port" ]] || fail "Could not determine the effective SSH port"
 
-status "Installing Docker-aware UFW integration"
-tmp_file=$(mktemp)
-trap 'rm -f "$tmp_file"' EXIT
-run_quiet curl -fsSL "$UFW_DOCKER_URL" -o "$tmp_file"
-install -m 0755 "$tmp_file" /usr/local/bin/ufw-docker
+if command -v ufw-docker >/dev/null 2>&1; then
+  done_msg "Docker-aware UFW integration is already installed"
+else
+  status "Installing Docker-aware UFW integration"
+  tmp_file=$(mktemp)
+  trap 'rm -f "$tmp_file"' EXIT
+  run_quiet curl -fsSL "$UFW_DOCKER_URL" -o "$tmp_file"
+  install -m 0755 "$tmp_file" /usr/local/bin/ufw-docker
+fi
 
-status "Applying firewall baseline"
-run_quiet ufw --force reset
-run_quiet ufw default deny incoming
-run_quiet ufw default allow outgoing
-run_quiet ufw allow "${ssh_port}/tcp" comment 'SSH'
-run_quiet ufw allow 80/tcp comment 'HTTP'
-run_quiet ufw allow 443/tcp comment 'HTTPS'
-run_quiet ufw allow 443/udp comment 'HTTPS HTTP/3'
-run_quiet ufw-docker install
-run_quiet ufw --force enable
-run_quiet systemctl restart ufw
+ufw_status=$(ufw status verbose)
+if grep -q 'Default: deny (incoming), allow (outgoing)' <<< "$ufw_status"; then
+  done_msg "Firewall default policies are already configured"
+else
+  status "Configuring firewall default policies"
+  run_quiet ufw default deny incoming
+  run_quiet ufw default allow outgoing
+fi
 
-configure_dokploy_firewall
+ensure_rule() {
+  local port=$1
+  local protocol=$2
+  local comment=$3
+  local rule="${port}/${protocol}"
+
+  if ufw status | grep -Eq "^[[:space:]]*${rule//\//\/}[[:space:]].*ALLOW"; then
+    done_msg "Firewall rule already allows $rule ($comment)"
+  else
+    status "Allowing $rule ($comment)"
+    run_quiet ufw allow "$rule" comment "$comment"
+  fi
+}
+
+ensure_rule "$ssh_port" tcp SSH
+ensure_rule 80 tcp HTTP
+ensure_rule 443 tcp HTTPS
+ensure_rule 443 udp 'HTTPS HTTP/3'
+
+if ufw-docker check >/dev/null 2>&1; then
+  done_msg "Docker-aware UFW rules are already configured"
+else
+  status "Configuring Docker-aware UFW rules"
+  run_quiet ufw-docker install
+fi
+
+if ufw status | grep -q '^Status: active$'; then
+  done_msg "Firewall is already enabled"
+else
+  status "Enabling firewall"
+  run_quiet ufw --force enable
+fi
 
 done_msg "Firewall enabled; public inbound access is limited to SSH, HTTP, and HTTPS"

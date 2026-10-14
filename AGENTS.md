@@ -7,6 +7,15 @@
 - Every numbered script is directly executable and must remain usable on its own when its prerequisites are present.
 - Child-script failures must propagate without parent runners printing duplicate failure reports.
 
+## Idempotency
+
+- Every requirement and setup step must be safe to run repeatedly.
+- Determine completion from the actual current system state; do not use marker/"done" flags to skip work.
+- If the desired state is already satisfied, leave it unchanged and print a concise success message saying so.
+- Only perform mutations, rewrites, service restarts, or installations when the current state differs from the desired state.
+- Never remove unrelated user configuration while reconciling a step. In particular, firewall reconciliation must preserve unrelated UFW rules.
+- Generic host requirements and system-configuration steps should remain independent of Dokploy where possible; application-specific decisions belong in the Dokploy step.
+
 ## Shared behavior
 
 `lib/common.sh` owns presentation, logging, error handling, package-install helpers, state, child execution, and shared Dokploy firewall rules.
