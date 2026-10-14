@@ -113,6 +113,8 @@ trap 'on_error $LINENO' ERR
 setup_user() {
   if [[ -n ${SUDO_USER:-} && ${SUDO_USER} != root ]]; then
     printf '%s' "$SUDO_USER"
+  elif [[ -r "$STATE_DIR/ssh_user" ]]; then
+    cat "$STATE_DIR/ssh_user"
   else
     printf 'root'
   fi

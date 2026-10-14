@@ -4,6 +4,53 @@ standalone_header "Docker"
 require_root
 require_command curl
 
+
+configure_docker_networking() {
+  require_command modprobe
+  require_command sysctl
+
+  local modules_file=/etc/modules-load.d/vps-setup-docker.conf
+  local sysctl_file=/etc/sysctl.d/99-vps-setup-docker.conf
+  local desired_modules='br_netfilter'
+  local desired_sysctl='net.bridge.bridge-nf-call-iptables = 1
+net.bridge.bridge-nf-call-ip6tables = 1'
+  local changed=false
+
+  if [[ ! -f "$modules_file" ]] || ! cmp -s "$modules_file" <(printf '%s\n' "$desired_modules"); then
+    printf '%s\n' "$desired_modules" > "$modules_file"
+    changed=true
+  fi
+
+  if [[ ! -d /sys/module/br_netfilter ]]; then
+    status "Loading br_netfilter kernel module"
+    run_quiet modprobe br_netfilter
+    changed=true
+  fi
+
+  if [[ ! -f "$sysctl_file" ]] || ! cmp -s "$sysctl_file" <(printf '%s\n' "$desired_sysctl"); then
+    printf '%s\n' "$desired_sysctl" > "$sysctl_file"
+    changed=true
+  fi
+
+  if [[ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null || true)" != 1 ]]; then
+    run_quiet sysctl -w net.bridge.bridge-nf-call-iptables=1
+    changed=true
+  fi
+
+  if [[ "$(sysctl -n net.bridge.bridge-nf-call-ip6tables 2>/dev/null || true)" != 1 ]]; then
+    run_quiet sysctl -w net.bridge.bridge-nf-call-ip6tables=1
+    changed=true
+  fi
+
+  if $changed; then
+    done_msg "Docker bridge firewall integration configured"
+  else
+    done_msg "Docker bridge firewall integration is already configured"
+  fi
+}
+
+configure_docker_networking
+
 if command -v docker >/dev/null 2>&1; then
   if docker info >/dev/null 2>&1; then
     done_msg "Docker is already installed and healthy: $(docker --version)"

@@ -16,7 +16,8 @@ else
     port_info=$(ss -H -ltnp "sport = :$port" 2>/dev/null || true)
     [[ -n "$port_info" ]] || continue
 
-    process=$(sed -n 's/.*users:(("\([^"]*\)",pid=\([0-9]*\).*/\1 (PID \2)/p' <<< "$port_info" | head -n 1)
+    process=$(sed -n 's/.*users:(("\([^"]*\)",pid=\([0-9]*\).*/\1 (PID \2)/p' <<< "$port_info")
+    process=${process%%$'\n'*}
     if [[ -n "$process" ]]; then
       fail "TCP port $port is already in use by $process"
     else

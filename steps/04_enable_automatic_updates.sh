@@ -3,7 +3,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
 standalone_header "Automatic updates"
 require_root
 
-config_20=/etc/apt/apt.conf.d/20auto-upgrades
+config_20=/etc/apt/apt.conf.d/20auto-upgrades-vps-setup
 config_52=/etc/apt/apt.conf.d/52unattended-upgrades-vps-setup
 
 desired_20='APT::Periodic::Update-Package-Lists "1";

@@ -13,7 +13,8 @@
 - Determine completion from the actual current system state; do not use marker/"done" flags to skip work.
 - If the desired state is already satisfied, leave it unchanged and print a concise success message saying so.
 - Only perform mutations, rewrites, service restarts, or installations when the current state differs from the desired state.
-- Never remove unrelated user configuration while reconciling a step. In particular, firewall reconciliation must preserve unrelated UFW rules.
+- Never remove or overwrite unrelated user configuration while reconciling a step. Prefer dedicated `vps-setup` drop-in files for managed configuration; firewall reconciliation must preserve unrelated UFW rules.
+- Desired state includes persistence across reboot where applicable (for example kernel modules and sysctls), not only the current runtime state.
 - Generic host requirements and system-configuration steps should remain independent of Dokploy where possible; application-specific decisions belong in the Dokploy step.
 
 ## Shared behavior

@@ -20,7 +20,7 @@ fi
 save_state ssh_user "$user"
 save_state server_ip "$server_ip"
 
-if [[ -s "$authorized_keys" ]]; then
+if [[ -r "$authorized_keys" ]] && grep -Eq '^(ssh-ed25519|ssh-rsa|ecdsa-sha2-nistp(256|384|521))[[:space:]]+' "$authorized_keys"; then
   done_msg "SSH key configured for $user"
   exit 0
 fi

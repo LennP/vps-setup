@@ -31,8 +31,13 @@ systemctl is-active --quiet fail2ban || fail "Fail2ban is not active"
 fail2ban-client status sshd >/dev/null || fail "Fail2ban SSH jail is not active"
 done_msg "Fail2ban SSH jail is active"
 
+status "Verifying Docker bridge firewall integration"
+[[ "$(sysctl -n net.bridge.bridge-nf-call-iptables 2>/dev/null || true)" == 1 ]] || fail "net.bridge.bridge-nf-call-iptables is not enabled"
+[[ "$(sysctl -n net.bridge.bridge-nf-call-ip6tables 2>/dev/null || true)" == 1 ]] || fail "net.bridge.bridge-nf-call-ip6tables is not enabled"
+done_msg "Docker bridge firewall integration is active"
+
 status "Verifying Docker"
-docker info >/dev/null || fail "Docker is not healthy"
+run_quiet docker info
 done_msg "Docker is healthy"
 
 status "Verifying Docker Swarm"

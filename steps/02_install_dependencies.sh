@@ -10,6 +10,7 @@ packages=(
   gnupg
   iproute2
   jq
+  kmod
   openssh-server
   tar
   ufw

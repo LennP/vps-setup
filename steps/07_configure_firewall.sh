@@ -66,4 +66,4 @@ else
   run_quiet ufw --force enable
 fi
 
-done_msg "Firewall enabled; public inbound access is limited to SSH, HTTP, and HTTPS"
+done_msg "Firewall enabled; required inbound rules are configured for SSH, HTTP, and HTTPS"
