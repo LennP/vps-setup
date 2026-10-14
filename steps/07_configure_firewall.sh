@@ -51,35 +51,47 @@ ensure_rule 80 tcp HTTP
 ensure_rule 443 tcp HTTPS
 ensure_rule 443 udp 'HTTPS HTTP/3'
 
-warn_additional_allow_rules() {
-  local status_output line target normalized_line
+warn_unexpected_allow_ports() {
+  local status_output line target destination port normalized_line
   local found=false
 
   status_output=$(ufw status)
   while IFS= read -r line; do
-    [[ "$line" =~ [[:space:]]ALLOW[[:space:]] ]] || continue
+    [[ "$line" =~ [[:space:]]ALLOW([[:space:]]|$) ]] || continue
 
     target=${line%%ALLOW*}
     target=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<< "$target")
     target=${target%" (v6)"}
 
-    case "$target" in
-      "$ssh_port/tcp"|80/tcp|443/tcp|443/udp)
+    # Normal host rules start with the destination port. ufw-docker forwarding
+    # rules start with a container IP followed by the destination port.
+    read -r first second _ <<< "$target"
+    if [[ "$first" == */* && "$first" != *.*/* ]]; then
+      destination=$first
+    elif [[ "$first" =~ ^[0-9]+$ ]]; then
+      destination=$first
+    else
+      destination=$second
+    fi
+
+    port=${destination%%/*}
+    case "$port" in
+      "$ssh_port"|80|443)
         continue
         ;;
     esac
 
     normalized_line=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//;s/[[:space:]][[:space:]]*/ /g' <<< "$line")
-    warn "Additional inbound firewall rule: $normalized_line"
+    warn "Unexpected inbound firewall port: $normalized_line"
     found=true
   done <<< "$status_output"
 
   if [[ "$found" == false ]]; then
-    done_msg "No additional inbound firewall allow rules found"
+    done_msg "No unexpected inbound firewall ports found"
   fi
 }
 
-warn_additional_allow_rules
+warn_unexpected_allow_ports
 
 if ufw-docker check >/dev/null 2>&1; then
   done_msg "Docker-aware UFW rules are already configured"
