@@ -8,8 +8,16 @@ if ! command -v ss >/dev/null 2>&1; then
 fi
 
 for port in 80 443 3000; do
-  if ss -H -ltn "sport = :$port" 2>/dev/null | grep -q .; then
-    fail "TCP port $port is already in use"
+  port_info="$(ss -H -ltnp "sport = :$port" 2>/dev/null)"
+
+  if [[ -n "$port_info" ]]; then
+    process="$(sed -n 's/.*users:(("\([^"]*\)",pid=\([0-9]*\).*/\1 (PID \2)/p' <<< "$port_info" | head -n1)"
+
+    if [[ -n "$process" ]]; then
+      fail "TCP port $port is already in use by $process"
+    else
+      fail "TCP port $port is already in use"
+    fi
   fi
 done
 
