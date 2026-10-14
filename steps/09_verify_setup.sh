@@ -8,11 +8,13 @@ require_command ufw
 require_command docker
 
 status "Verifying SSH password authentication is disabled"
-sshd -T | grep -q '^passwordauthentication no$' || fail "SSH PasswordAuthentication is not disabled"
+sshd_config=$(sshd -T)
+grep -q '^passwordauthentication no$' <<< "$sshd_config" || fail "SSH PasswordAuthentication is not disabled"
 done_msg "SSH password authentication is disabled"
 
 status "Verifying UFW"
-ufw status | grep -q '^Status: active$' || fail "UFW is not active"
+ufw_status=$(ufw status)
+grep -q '^Status: active$' <<< "$ufw_status" || fail "UFW is not active"
 done_msg "UFW is active"
 
 status "Verifying Docker/UFW integration"

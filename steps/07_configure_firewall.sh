@@ -36,7 +36,9 @@ ensure_rule() {
   local comment=$3
   local rule="${port}/${protocol}"
 
-  if ufw status | grep -Eq "^[[:space:]]*${rule//\//\/}[[:space:]].*ALLOW"; then
+  local status_output
+  status_output=$(ufw status)
+  if grep -Eq "^[[:space:]]*${rule//\//\/}[[:space:]].*ALLOW" <<< "$status_output"; then
     done_msg "Firewall rule already allows $rule ($comment)"
   else
     status "Allowing $rule ($comment)"
@@ -56,7 +58,8 @@ else
   run_quiet ufw-docker install
 fi
 
-if ufw status | grep -q '^Status: active$'; then
+ufw_status=$(ufw status)
+if grep -q '^Status: active$' <<< "$ufw_status"; then
   done_msg "Firewall is already enabled"
 else
   status "Enabling firewall"
