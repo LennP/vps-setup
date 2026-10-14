@@ -51,6 +51,36 @@ ensure_rule 80 tcp HTTP
 ensure_rule 443 tcp HTTPS
 ensure_rule 443 udp 'HTTPS HTTP/3'
 
+warn_additional_allow_rules() {
+  local status_output line target normalized_line
+  local found=false
+
+  status_output=$(ufw status)
+  while IFS= read -r line; do
+    [[ "$line" =~ [[:space:]]ALLOW[[:space:]] ]] || continue
+
+    target=${line%%ALLOW*}
+    target=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//' <<< "$target")
+    target=${target%" (v6)"}
+
+    case "$target" in
+      "$ssh_port/tcp"|80/tcp|443/tcp|443/udp)
+        continue
+        ;;
+    esac
+
+    normalized_line=$(sed 's/^[[:space:]]*//;s/[[:space:]]*$//;s/[[:space:]][[:space:]]*/ /g' <<< "$line")
+    warn "Additional inbound firewall rule: $normalized_line"
+    found=true
+  done <<< "$status_output"
+
+  if [[ "$found" == false ]]; then
+    done_msg "No additional inbound firewall allow rules found"
+  fi
+}
+
+warn_additional_allow_rules
+
 if ufw-docker check >/dev/null 2>&1; then
   done_msg "Docker-aware UFW rules are already configured"
 else
