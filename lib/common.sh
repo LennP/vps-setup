@@ -164,15 +164,6 @@ configure_dokploy_firewall() {
     return 0
   fi
 
-  if [[ "$(docker info --format '{{.Swarm.LocalNodeState}}' 2>/dev/null)" == "active" ]]; then
-    if docker service inspect ufw-docker-agent >/dev/null 2>&1 && ufw-docker check >/dev/null 2>&1; then
-      done_msg "Docker Swarm firewall integration is already configured"
-    else
-      status "Configuring Docker-aware firewall integration for Docker Swarm"
-      run_quiet ufw-docker install
-    fi
-  fi
-
   local rules
   rules=$(ufw-docker list dokploy-traefik 2>/dev/null || true)
 

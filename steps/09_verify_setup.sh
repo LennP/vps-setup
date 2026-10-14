@@ -39,10 +39,6 @@ status "Verifying Docker Swarm"
 [[ "$(docker info --format '{{.Swarm.LocalNodeState}}')" == "active" ]] || fail "Docker Swarm is not active"
 done_msg "Docker Swarm is active"
 
-status "Verifying Docker Swarm firewall integration"
-docker service inspect ufw-docker-agent >/dev/null 2>&1 || fail "ufw-docker Swarm agent was not found"
-done_msg "Docker Swarm firewall integration is active"
-
 status "Verifying Dokploy services"
 services=$(docker service ls --format '{{.Name}}')
 grep -qx 'dokploy' <<<"$services" || fail "Dokploy service was not found"
