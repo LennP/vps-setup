@@ -43,10 +43,32 @@ if [[ ! -f "$config_file" ]] || ! cmp -s "$config_file" <(printf '%s\n' "$desire
   config_changed=true
 fi
 
+run_quiet fail2ban-client -t
+
 if ! systemctl is-enabled --quiet fail2ban || ! systemctl is-active --quiet fail2ban; then
   run_quiet systemctl enable --now fail2ban
 elif $config_changed; then
   run_quiet systemctl restart fail2ban
+fi
+
+for _ in {1..20}; do
+  if fail2ban-client ping >/dev/null 2>&1; then
+    break
+  fi
+
+  if ! systemctl is-active --quiet fail2ban; then
+    run_quiet systemctl status fail2ban --no-pager -l || true
+    run_quiet journalctl -u fail2ban -n 20 --no-pager || true
+    fail "Fail2ban failed to start"
+  fi
+
+  sleep 0.25
+done
+
+if ! fail2ban-client ping >/dev/null 2>&1; then
+  run_quiet systemctl status fail2ban --no-pager -l || true
+  run_quiet journalctl -u fail2ban -n 20 --no-pager || true
+  fail "Fail2ban started but did not become ready"
 fi
 
 run_quiet fail2ban-client status sshd
