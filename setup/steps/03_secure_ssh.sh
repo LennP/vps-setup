@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 standalone_header "Secure SSH"
 require_root
 require_command sshd
@@ -8,7 +8,7 @@ SSH_PORT=${SSH_PORT:-22}
 [[ "$SSH_PORT" =~ ^[0-9]+$ ]] && (( SSH_PORT >= 1 && SSH_PORT <= 65535 )) || fail "SSH_PORT must be between 1 and 65535"
 
 status "Confirming SSH key access exists before disabling passwords"
-run_child "$REPO_DIR/requirements/04_ssh_key.sh"
+run_child "$REPO_DIR/setup/requirements/04_ssh_key.sh"
 
 config_dir=/etc/ssh/sshd_config.d
 config_file="$config_dir/00-vps-setup.conf"

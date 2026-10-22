@@ -2,7 +2,7 @@
 
 ## Execution model
 
-- `setup.sh` runs `requirements/run.sh` and then `steps/run.sh`.
+- `setup.sh` runs `setup/requirements/run.sh` and then `setup/steps/run.sh`.
 - Each `run.sh` executes numbered scripts in lexical order.
 - Every numbered script is directly executable and must remain usable on its own when its prerequisites are present.
 - Child-script failures must propagate without parent runners printing duplicate failure reports.
@@ -19,7 +19,7 @@
 
 ## Shared behavior
 
-`lib/common.sh` owns presentation, logging, error handling, package-install helpers, state, child execution, and shared Dokploy firewall rules.
+`lib/common.sh` at the repository root owns presentation, logging, error handling, package-install helpers, state, child execution, and shared Dokploy firewall rules. Setup requirements and steps live under `setup/`.
 
 Successful command noise is written to `/var/log/vps-setup/<script>.log`. The terminal should only show concise progress. On failure, show the failing script, line, exit status context, recent log output, and log path, then stop immediately.
 

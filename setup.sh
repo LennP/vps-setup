@@ -5,8 +5,8 @@ require_root
 section "VPS setup"
 info "Preparing this server for Dokploy."
 
-run_child "$REPO_DIR/requirements/run.sh"
-run_child "$REPO_DIR/steps/run.sh"
+run_child "$REPO_DIR/setup/requirements/run.sh"
+run_child "$REPO_DIR/setup/steps/run.sh"
 
 printf '\n'
 done_msg "VPS setup completed successfully"

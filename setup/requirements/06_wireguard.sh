@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 standalone_header "WireGuard support"
 status "Checking TUN/WireGuard host support"
 [[ -c /dev/net/tun ]] || fail "/dev/net/tun is unavailable; WireGuard/VPN containers requiring TUN will not work on this VPS"

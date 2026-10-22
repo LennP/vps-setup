@@ -21,17 +21,17 @@ The setup guides you through anything that needs your input, including creating 
 Requirements only:
 
 ```bash
-sudo ./requirements/run.sh
+sudo ./setup/requirements/run.sh
 ```
 
 Setup steps only:
 
 ```bash
-sudo ./steps/run.sh
+sudo ./setup/steps/run.sh
 ```
 
 Any individual check or step can also be run directly, for example:
 
 ```bash
-sudo ./steps/07_configure_firewall.sh
+sudo ./setup/steps/07_configure_firewall.sh
 ```

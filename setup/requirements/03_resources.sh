@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-source "$(dirname "${BASH_SOURCE[0]}")/../lib/common.sh"
+source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 standalone_header "Server resources"
 MIN_MEMORY_MB=${MIN_MEMORY_MB:-1900}
 MIN_DISK_GB=${MIN_DISK_GB:-30}
