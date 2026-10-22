@@ -1,5 +1,11 @@
 # vps-setup implementation notes
 
+## Contribution style
+
+- Keep code changes concise and limited to what was requested.
+- Make only the necessary fixes to get it working; avoid unrelated changes.
+- Run relevant checks for changed files and report which checks were run. For shell changes, use `bash -n` and ShellCheck when available.
+
 ## Execution model
 
 - `setup.sh` runs `setup/requirements/run.sh` and then `setup/steps/run.sh`.
