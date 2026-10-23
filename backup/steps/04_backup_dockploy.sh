@@ -4,15 +4,36 @@ source "$REPO_DIR/lib/dokploy.sh"
 standalone_header "Back up Dokploy"
 require_root
 
-[[ -n ${DOKPLOY_BACKUP_ID:-} ]] \
-  || fail "DOKPLOY_BACKUP_ID is required"
+status "Creating Dokploy instance backup configuration"
+
+destinations=$(dokploy_get destination.all)
+
+destination_id=$(jq -r \
+  '.[] | select(.name == "Cloudflare") | .destinationId' \
+  <<< "$destinations" | head -1)
+
+[[ -n "$destination_id" ]] || fail "Cloudflare destination not found"
+
+payload=$(jq -n \
+  --arg destination "$destination_id" \
+  '{
+    schedule: "0 3 * * *",
+    enabled: false,
+    prefix: "dokploy",
+    destinationId: $destination,
+    database: "dokploy",
+    databaseType: "web-server"
+  }')
+
+created=$(dokploy_post backup.create "$payload")
+backup_id=$(jq -r '.backupId // empty' <<< "$created")
+
+[[ -n "$backup_id" ]] || fail "Failed to create Dokploy backup configuration"
 
 status "Starting Dokploy instance backup"
 
-payload=$(jq -n \
-  --arg id "$DOKPLOY_BACKUP_ID" \
-  '{backupId: $id}')
-
-dokploy_post backup.manualBackupWebServer "$payload" >/dev/null
+dokploy_post backup.manualBackupWebServer \
+  "$(jq -n --arg id "$backup_id" '{backupId: $id}')" \
+  >/dev/null
 
 done_msg "Dokploy instance backup requested"
