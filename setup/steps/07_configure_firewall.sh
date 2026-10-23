@@ -93,19 +93,19 @@ warn_unexpected_allow_ports() {
 
 warn_unexpected_allow_ports
 
-if ufw-docker check >/dev/null 2>&1; then
-  done_msg "Docker-aware UFW rules are already configured"
-else
-  status "Configuring Docker-aware UFW rules"
-  run_quiet ufw-docker install
-fi
-
 ufw_status=$(ufw status)
 if grep -q '^Status: active$' <<< "$ufw_status"; then
   done_msg "Firewall is already enabled"
 else
   status "Enabling firewall"
   run_quiet ufw --force enable
+fi
+
+if ufw-docker check >/dev/null 2>&1; then
+  done_msg "Docker-aware UFW rules are already configured"
+else
+  status "Configuring Docker-aware UFW rules"
+  run_quiet ufw-docker install
 fi
 
 done_msg "Firewall enabled; required inbound rules are configured for SSH, HTTP, and HTTPS"
