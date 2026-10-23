@@ -6,6 +6,7 @@ require_root
 status "Discovering Docker named volumes"
 
 mkdir -p "$STATE_DIR/backup"
+chmod 700 "$STATE_DIR/backup"
 
 docker volume ls --format '{{.Name}}' \
   | grep -vE '^dokploy(-postgres)?$' \
