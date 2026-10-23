@@ -14,14 +14,15 @@ destination_id=$(jq -r \
 
 [[ -n "$destination_id" ]] || fail "Cloudflare destination not found"
 
-# Retrieve existing configurations directly from Dokploy's database.
-backup_id=$(docker exec dokploy-postgres \
-  psql -U dokploy -d dokploy -At \
-  -c "SELECT \"backupId\" FROM backup
-      WHERE \"databaseType\" = 'web-server'
-      AND \"database\" = 'dokploy'
-      AND \"destinationId\" = '$destination_id'
-      LIMIT 1;")
+backups=$(dokploy_get user.getBackups)
+
+backup_id=$(jq -r --arg destination "$destination_id" \
+  '[.backups[] | select(
+    .destinationId == $destination
+    and .database == "dokploy"
+    and .databaseType == "web-server"
+  ) | .backupId][0] // empty' \
+  <<< "$backups")
 
 if [[ -z "$backup_id" ]]; then
   status "Creating Dokploy instance backup configuration"
@@ -39,13 +40,15 @@ if [[ -z "$backup_id" ]]; then
 
   dokploy_post backup.create "$payload" >/dev/null
 
-  backup_id=$(docker exec dokploy-postgres \
-    psql -U dokploy -d dokploy -At \
-    -c "SELECT \"backupId\" FROM backup
-        WHERE \"databaseType\" = 'web-server'
-        AND \"database\" = 'dokploy'
-        AND \"destinationId\" = '$destination_id'
-        LIMIT 1;")
+  backups=$(dokploy_get user.getBackups)
+
+  backup_id=$(jq -r --arg destination "$destination_id" \
+    '[.backups[] | select(
+      .destinationId == $destination
+      and .database == "dokploy"
+      and .databaseType == "web-server"
+    ) | .backupId][0] // empty' \
+    <<< "$backups")
 
   [[ -n "$backup_id" ]] \
     || fail "Failed to create Dokploy backup configuration"
