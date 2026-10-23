@@ -17,7 +17,7 @@ printf '\n'
 
 printf '  1. Open your Dokploy dashboard.\n'
 printf '  2. Log in to the fresh installation.\n'
-printf '  3. Configure your Cloudflare R2 destination.\n'
+printf '  3. Configure your Cloudflare R2 destination and name it exactly "Cloudflare".\n'
 printf '  4. Open the web server backup/restore section.\n'
 printf '  5. Select your existing backup from Cloudflare R2.\n'
 printf '  6. Restore the Dokploy instance.\n'
