@@ -18,6 +18,10 @@ printf '  4. Enter the exact volume name from the backup configuration.\n'
 printf '  5. Select the Cloudflare R2 destination.\n'
 printf '  6. Select the latest successful backup.\n'
 printf '  7. Restore and wait for completion.\n'
+printf '  8. Repeat for all application volumes.\n'
+printf '\n'
+printf '  9. Redeploy all applications that are not running.\n'
+printf ' 10. Verify that the applications start and use their restored data.\n'
 printf '\n'
 
 warn "The volume name must match the name expected by Docker Compose."
