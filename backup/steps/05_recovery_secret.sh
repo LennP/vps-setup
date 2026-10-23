@@ -4,8 +4,6 @@ standalone_header "Back up recovery secret"
 require_root
 
 secret_name="dokploy_auth_secret"
-output_dir="$STATE_DIR/backup"
-output_file="$output_dir/${secret_name}.enc"
 
 status "Locating Docker Swarm secret"
 
@@ -15,15 +13,15 @@ docker secret inspect "$secret_name" >/dev/null 2>&1 \
 container_id=""
 secret_path=""
 
-# Find the Swarm service that uses the secret.
 while IFS= read -r service; do
   secret_path=$(docker service inspect "$service" \
     --format '{{json .Spec.TaskTemplate.ContainerSpec.Secrets}}' \
     | jq -r --arg name "$secret_name" \
       '[.[]? | select(.SecretName == $name) |
-        "/run/secrets/" + .File.Name][0] // empty')
+        .File.Name][0] // empty')
 
   [[ -n "$secret_path" ]] || continue
+  [[ "$secret_path" == /* ]] || secret_path="/run/secrets/$secret_path"
 
   container_id=$(docker ps -q \
     --filter "label=com.docker.swarm.service.name=$service" \
@@ -35,16 +33,24 @@ done < <(docker service ls --format '{{.Name}}')
 [[ -n "$container_id" ]] \
   || fail "No running Swarm container exposes '$secret_name'"
 
+docker exec "$container_id" test -s "$secret_path" \
+  || fail "Docker Swarm secret is empty or inaccessible"
+
 status "Encrypting recovery secret"
 
-mkdir -p "$output_dir"
-chmod 700 "$output_dir"
-umask 077
+printf '\n'
+printf 'Enter a passphrase to encrypt the recovery secret:\n'
 
-docker exec "$container_id" cat "$secret_path" \
+encrypted=$(docker exec "$container_id" cat "$secret_path" \
   | openssl enc -aes-256-cbc -pbkdf2 -iter 600000 -salt \
-      -out "$output_file"
+  | base64 -w 0)
 
-chmod 600 "$output_file"
+[[ -n "$encrypted" ]] || fail "Encryption failed"
 
-done_msg "Encrypted recovery secret saved to $output_file"
+printf '\n'
+printf '%s\n' '--- BEGIN ENCRYPTED DOKPLOY SECRET ---'
+printf '%s\n' "$encrypted"
+printf '%s\n' '--- END ENCRYPTED DOKPLOY SECRET ---'
+printf '\n'
+
+done_msg "Copy and store this encrypted secret somewhere safe"
