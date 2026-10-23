@@ -36,6 +36,7 @@ Persistent setup hints are stored under `/var/lib/vps-setup`.
 - Ubuntu 22.04 LTS
 - Ubuntu 24.04 LTS
 - Debian 12
+- Debian 13
 
 Keep host support intentionally limited to Ubuntu/Debian unless every affected step is implemented and tested for another distro family.
 

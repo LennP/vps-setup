@@ -7,10 +7,10 @@ status "Checking operating system"
 source /etc/os-release
 
 case "${ID:-}:${VERSION_ID:-}" in
-  ubuntu:22.04|ubuntu:24.04|debian:12) ;;
+  ubuntu:22.04|ubuntu:24.04|debian:12|debian:13) ;;
   ubuntu:*) fail "Supported Ubuntu versions are 22.04 and 24.04; detected: ${PRETTY_NAME:-unknown}" ;;
-  debian:*) fail "Supported Debian version is 12; detected: ${PRETTY_NAME:-unknown}" ;;
-  *) fail "Supported operating systems are Ubuntu 22.04/24.04 and Debian 12; detected: ${PRETTY_NAME:-unknown}" ;;
+  debian:*) fail "Supported Debian versions are 12 and 13; detected: ${PRETTY_NAME:-unknown}" ;;
+  *) fail "Supported operating systems are Ubuntu 22.04/24.04 and Debian 12/13; detected: ${PRETTY_NAME:-unknown}" ;;
 esac
 
 done_msg "Supported OS: ${PRETTY_NAME}"
