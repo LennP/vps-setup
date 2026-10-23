@@ -14,6 +14,10 @@ destination_id=$(jq -r '.[0].destinationId // empty' <<< "$destinations")
 
 backups=$(dokploy_get user.getBackups)
 
+user_id=$(jq -r '.id // empty' <<< "$backups")
+
+[[ -n "$user_id" ]] || fail "Could not determine Dokploy user ID"
+
 backup_id=$(jq -r --arg destination "$destination_id" \
   '[.backups[] | select(
     .destinationId == $destination
@@ -27,13 +31,15 @@ if [[ -z "$backup_id" ]]; then
 
   payload=$(jq -n \
     --arg destination "$destination_id" \
+    --arg userId "$user_id" \
     '{
       schedule: "0 0 * * 1-5",
       enabled: false,
       prefix: "/",
       destinationId: $destination,
       database: "dokploy",
-      databaseType: "web-server"
+      databaseType: "web-server",
+      userId: $userId
     }')
 
   dokploy_post backup.create "$payload" >/dev/null
