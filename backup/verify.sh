@@ -11,4 +11,4 @@ backups_file="$STATE_DIR/backup/volume-backups"
 count=$(wc -l < "$backups_file")
 
 done_msg "$count volume backup requests submitted"
-warn "Cloudflare R2 upload completion has not been verified"
+warn "Backup upload completion has not been verified"
