@@ -92,7 +92,7 @@ if ! (
     | base64 -d \
     | openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 \
         -pass fd:3 3<<< "$passphrase" \
-    | docker secret create "$restored_name" -
+    | docker secret create "$restored_name" - >/dev/null
 ); then
   unset passphrase encrypted
   docker secret rm "$restored_name" >/dev/null 2>&1 || true
