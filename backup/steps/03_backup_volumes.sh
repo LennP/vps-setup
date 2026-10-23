@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 source "$REPO_DIR/lib/dokploy.sh"
+
 standalone_header "Back up volumes"
 require_root
 
@@ -29,3 +30,15 @@ while IFS=$'\t' read -r volume backup_id; do
 done < "$backups_file"
 
 done_msg "Requested $count volume backups"
+
+printf '\n'
+warn "Save these volume names for disaster recovery:"
+printf '\n'
+
+while IFS=$'\t' read -r volume backup_id; do
+  [[ -n "$backup_id" ]] || continue
+  printf '  %s\n' "$volume"
+done < "$backups_file"
+
+printf '\n'
+info "You will need these exact names when restoring volumes in Dokploy."

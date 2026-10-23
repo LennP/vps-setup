@@ -4,42 +4,25 @@ source "$(dirname "${BASH_SOURCE[0]}")/../../lib/common.sh"
 standalone_header "Restore Docker volumes"
 require_root
 
-status "Discovering application volumes"
-
-mapfile -t volumes < <(
-  docker volume ls --format '{{.Name}}' \
-    | awk '$0 != "dokploy" && $0 != "dokploy-postgres"'
-)
-
-if (( ${#volumes[@]} == 0 )); then
-  warn "No application volumes currently exist"
-  warn "Deploy the restored applications before restoring their volumes"
-  fail "No application volumes found"
-fi
-
-done_msg "Found ${#volumes[@]} application volumes"
+info "Dokploy can restore volume backups even when Docker volumes do not exist."
+info "Missing volumes are created automatically during restoration."
 
 printf '\n'
-info "Restore the following volumes using Dokploy."
-printf '\n'
-
-for volume in "${volumes[@]}"; do
-  info "$volume"
-done
-
-printf '\n'
-info "For each volume:"
+info "For each application with volume backups:"
 printf '\n'
 
 printf '  1. Open the application in Dokploy.\n'
-printf '  2. Navigate to its volume backup configuration.\n'
-printf '  3. Find the latest successful Cloudflare R2 backup.\n'
-printf '  4. Restore the volume.\n'
-printf '  5. Wait until restoration has completed.\n'
+printf '  2. Navigate to Volume Backups.\n'
+printf '  3. Open Restore Volume Backup.\n'
+printf '  4. Enter the exact volume name from the backup configuration.\n'
+printf '  5. Select the Cloudflare R2 destination.\n'
+printf '  6. Select the latest successful backup.\n'
+printf '  7. Restore and wait for completion.\n'
 printf '\n'
 
-warn "Stop applications before restoring volumes that contain active data."
-warn "Restoring over a running database can cause data inconsistencies."
+warn "The volume name must match the name expected by Docker Compose."
+warn "Restore application volumes before deploying their applications."
+warn "Never restore a volume while an application is using it."
 
 printf '\n'
 read -rp "Have all application volumes been restored? [y/N] " confirm
