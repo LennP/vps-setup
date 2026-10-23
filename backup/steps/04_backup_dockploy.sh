@@ -4,7 +4,7 @@ source "$REPO_DIR/lib/dokploy.sh"
 standalone_header "Back up Dokploy"
 require_root
 
-status "Creating Dokploy instance backup configuration"
+status "Finding Dokploy instance backup configuration"
 
 destinations=$(dokploy_get destination.all)
 
@@ -14,21 +14,46 @@ destination_id=$(jq -r \
 
 [[ -n "$destination_id" ]] || fail "Cloudflare destination not found"
 
-payload=$(jq -n \
-  --arg destination "$destination_id" \
-  '{
-    schedule: "0 3 * * *",
-    enabled: false,
-    prefix: "dokploy",
-    destinationId: $destination,
-    database: "dokploy",
-    databaseType: "web-server"
-  }')
+backups=$(dokploy_get backup.list \
+  --data-urlencode "databaseType=web-server")
 
-created=$(dokploy_post backup.create "$payload")
-backup_id=$(jq -r '.backupId // empty' <<< "$created")
+backup_id=$(jq -r --arg destination "$destination_id" \
+  '[.[] | select(.destinationId == $destination and .database == "dokploy") | .backupId][0] // empty' \
+  <<< "$backups")
 
-[[ -n "$backup_id" ]] || fail "Failed to create Dokploy backup configuration"
+if [[ -z "$backup_id" ]]; then
+  status "Creating Dokploy instance backup configuration"
+
+  payload=$(jq -n \
+    --arg destination "$destination_id" \
+    '{
+      schedule: "0 0 * * 1-5",
+      enabled: false,
+      prefix: "/",
+      destinationId: $destination,
+      database: "dokploy",
+      databaseType: "web-server"
+    }')
+
+  created=$(dokploy_post backup.create "$payload")
+  backup_id=$(jq -r '.backupId // empty' <<< "$created")
+
+  if [[ -z "$backup_id" ]]; then
+    backups=$(dokploy_get backup.list \
+      --data-urlencode "databaseType=web-server")
+
+    backup_id=$(jq -r --arg destination "$destination_id" \
+      '[.[] | select(.destinationId == $destination and .database == "dokploy") | .backupId][0] // empty' \
+      <<< "$backups")
+  fi
+
+  [[ -n "$backup_id" ]] \
+    || fail "Failed to configure Dokploy instance backup"
+
+  done_msg "Created backup configuration"
+else
+  done_msg "Backup configuration already exists"
+fi
 
 status "Starting Dokploy instance backup"
 

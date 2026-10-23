@@ -26,12 +26,16 @@ backups_file="$STATE_DIR/backup/volume-backups"
 declare -A compose_ids
 
 while IFS= read -r compose_id; do
+  [[ -n "$compose_id" ]] || continue
+
   compose=$(dokploy_get compose.one \
     --data-urlencode "composeId=$compose_id")
 
   app_name=$(jq -r '.appName // empty' <<< "$compose")
 
-  [[ -n "$app_name" ]] && compose_ids["$app_name"]=$compose_id
+  if [[ -n "$app_name" ]]; then
+    compose_ids["$app_name"]=$compose_id
+  fi
 done < <(
   jq -r '.[].environments[]?.compose[]?.composeId' <<< "$projects"
 )
@@ -79,6 +83,16 @@ while IFS= read -r volume; do
 
     created=$(dokploy_post volumeBackups.create "$payload")
     backup_id=$(jq -r '.volumeBackupId // empty' <<< "$created")
+
+    if [[ -z "$backup_id" ]]; then
+      existing=$(dokploy_get volumeBackups.list \
+        --data-urlencode "id=$compose_id" \
+        --data-urlencode "volumeBackupType=compose")
+
+      backup_id=$(jq -r --arg volume "$volume" \
+        '[.[] | select(.volumeName == $volume) | .volumeBackupId][0] // empty' \
+        <<< "$existing")
+    fi
 
     [[ -n "$backup_id" ]] \
       || fail "Failed to configure backup for $volume"

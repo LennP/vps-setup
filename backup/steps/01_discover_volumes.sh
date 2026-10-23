@@ -9,7 +9,7 @@ mkdir -p "$STATE_DIR/backup"
 chmod 700 "$STATE_DIR/backup"
 
 docker volume ls --format '{{.Name}}' \
-  | grep -vE '^dokploy(-postgres)?$' \
+  | awk '$0 != "dokploy" && $0 != "dokploy-postgres"' \
   > "$STATE_DIR/backup/volumes"
 
 while IFS= read -r volume; do
