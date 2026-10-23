@@ -8,7 +8,7 @@ info "Backing up Dokploy and Docker named volumes."
 printf '\n'
 info "Create a Dokploy API key:"
 printf '  1. Open your Dokploy dashboard.\n'
-printf '  2. Navigate to Profile → API/CLI.\n'
+printf '  2. Navigate to Profile → API/CLI Keys.\n'
 printf '  3. Create a new API key.\n'
 printf '  4. Copy the generated key.\n'
 printf '\n'
