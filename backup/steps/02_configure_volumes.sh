@@ -9,11 +9,9 @@ status "Retrieving Dokploy configuration"
 projects=$(dokploy_get project.all)
 destinations=$(dokploy_get destination.all)
 
-destination_id=$(jq -r \
-  '.[] | select(.name == "Cloudflare") | .destinationId' \
-  <<< "$destinations" | head -1)
+destination_id=$(jq -r '.[0].destinationId // empty' <<< "$destinations")
 
-[[ -n "$destination_id" ]] || fail "Cloudflare destination not found"
+[[ -n "$destination_id" ]] || fail "No backup destination configured"
 
 volumes_file="$STATE_DIR/backup/volumes"
 backups_file="$STATE_DIR/backup/volume-backups"

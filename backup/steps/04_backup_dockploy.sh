@@ -8,11 +8,9 @@ status "Finding Dokploy instance backup configuration"
 
 destinations=$(dokploy_get destination.all)
 
-destination_id=$(jq -r \
-  '.[] | select(.name == "Cloudflare") | .destinationId' \
-  <<< "$destinations" | head -1)
+destination_id=$(jq -r '.[0].destinationId // empty' <<< "$destinations")
 
-[[ -n "$destination_id" ]] || fail "Cloudflare destination not found"
+[[ -n "$destination_id" ]] || fail "No backup destination configured"
 
 backups=$(dokploy_get user.getBackups)
 
